@@ -12,7 +12,7 @@ PERPLEXICA = os.getenv("PERPLEXICA_INTERNAL", "http://perplexica.railway.interna
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "ok", "user": RELAY_USER, "has_pass": bool(RELAY_PASS), "backend": PERPLEXICA}
 
 def check_auth(request: Request) -> bool:
     """HTTP Basic Auth only — MCP passes credentials via user:pass@ URL."""
