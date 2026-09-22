@@ -40,14 +40,23 @@ async def proxy(path: str, request: Request):
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         url = f"{PERPLEXICA}/{path}"
-        resp = await client.request(
-            method=request.method,
-            url=url,
-            content=body,
-            headers=headers,
-        )
-
-    return JSONResponse(content=resp.json(), status_code=resp.status_code)
+        try:
+            resp = await client.request(
+                method=request.method,
+                url=url,
+                content=body,
+                headers=headers,
+            )
+            try:
+                data = resp.json()
+            except Exception:
+                data = {"error": resp.text[:500], "status": resp.status_code}
+            return JSONResponse(content=data, status_code=resp.status_code)
+        except Exception as e:
+            return JSONResponse(
+                content={"error": str(e), "detail": "Relay could not reach Perplexica"},
+                status_code=502,
+            )
 
 if __name__ == "__main__":
     import uvicorn
