@@ -15,24 +15,16 @@ async def health():
     return {"status": "ok"}
 
 def check_auth(request: Request) -> bool:
-    """Accept Basic Auth header OR query-param fallback for MCP servers."""
+    """HTTP Basic Auth only — MCP passes credentials via user:pass@ URL."""
     auth = request.headers.get("Authorization", "")
-
-    # Check Basic Auth header first
-    if auth.startswith("Basic "):
-        try:
-            decoded = base64.b64decode(auth[6:]).decode()
-            user, _, passwd = decoded.partition(":")
-            if user == RELAY_USER and passwd == RELAY_PASS:
-                return True
-        except Exception:
-            pass
-
-    # Fallback: query param (for MCP servers that can't set headers)
-    if request.query_params.get("auth") == RELAY_PASS:
-        return True
-
-    return False
+    if not auth.startswith("Basic "):
+        return False
+    try:
+        decoded = base64.b64decode(auth[6:]).decode()
+        user, _, passwd = decoded.partition(":")
+        return user == RELAY_USER and passwd == RELAY_PASS
+    except Exception:
+        return False
 
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 async def proxy(path: str, request: Request):
